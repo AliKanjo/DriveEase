@@ -34,11 +34,11 @@ public class NotificationController {
     public ResponseEntity<?> markAsRead(@PathVariable Long id, Authentication authentication) {
         Notification notification = notificationRepository.findById(id).orElseThrow();
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
-        
+
         if (!notification.getUser().getId().equals(user.getId())) {
             return ResponseEntity.status(403).body("Not authorized");
         }
-        
+
         notification.setRead(true);
         notificationRepository.save(notification);
         return ResponseEntity.ok().build();
