@@ -55,7 +55,7 @@ public class PaymentService {
         // Simulate successful payment
         payment.setStatus(PaymentStatus.SUCCESS);
 
-        booking.setStatus(BookingStatus.APPROVED);
+        booking.setStatus(BookingStatus.ACTIVE);
         bookingRepository.save(booking);
 
         Notification notif = Notification.builder()
