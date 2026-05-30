@@ -41,10 +41,9 @@ const AdminTickets = () => {
       await api.post(`/tickets/${activeTicket.id}/reply`, { message: replyText });
       setReplyText('');
       loadTicketReplies(activeTicket);
-      fetchTickets(); // refresh list to see PENDING status
+      fetchTickets();
     } catch (err) {
       console.error(err);
-      alert('Failed to send reply');
     }
   };
 
@@ -190,7 +189,7 @@ const AdminTickets = () => {
                       placeholder="Type response to customer..."
                       style={{ flex: 1, padding: '12px', border: '1px solid var(--border)', borderRadius: '8px', minHeight: '60px', resize: 'vertical' }}
                     />
-                    <button className="btn btn-brand" onClick={handleReply}>Send Reply</button>
+                    <button className="btn btn-primary" onClick={handleReply}>Send Reply</button>
                   </div>
                 </div>
               )}

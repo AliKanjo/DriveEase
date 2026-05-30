@@ -40,8 +40,7 @@ const BranchManagement = () => {
         await api.delete(`/branches/${id}`);
         fetchBranches();
       } catch (err) {
-        console.error(err);
-        alert('Failed to delete branch. It might have associated vehicles or bookings.');
+        console.error('Failed to delete branch. It might have associated vehicles or bookings.', err);
       }
     }
   };
@@ -65,7 +64,7 @@ const BranchManagement = () => {
             <label className="form-label">Location / Address</label>
             <input className="search-input" style={{ width: '100%', marginBottom: '15px' }} value={location} onChange={e => setLocation(e.target.value)} required />
             
-            <button type="submit" className="btn btn-brand" style={{ width: '100%' }}>Create Branch</button>
+            <button type="submit" className="btn btn-green" style={{ width: '100%' }}>Create Branch</button>
           </form>
         </div>
         

@@ -20,9 +20,12 @@ const AdminSms = () => {
   }, []);
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1>Simulated SMS Dispatch Log</h1>
+    <div className="page active">
+      <div className="section-hdr">
+        <div>
+          <div className="section-title">Simulated SMS Dispatch Log</div>
+          <div className="section-sub">History of automated SMS messages sent to customers</div>
+        </div>
       </div>
       <p style={{ color: 'var(--text2)', marginBottom: '20px' }}>
         View the history of automated SMS text messages sent to customers.
@@ -35,8 +38,8 @@ const AdminSms = () => {
           No SMS logs found.
         </div>
       ) : (
-        <div className="table-container">
-          <table className="data-table">
+        <div className="table-wrap">
+          <table>
             <thead>
               <tr>
                 <th>Date & Time</th>

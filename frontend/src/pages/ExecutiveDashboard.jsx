@@ -9,8 +9,14 @@ import {
 
 const ExecutiveDashboard = () => {
   const { user } = useContext(AuthContext);
-  
+
+  // Guard FIRST — before any hooks or data fetching — to avoid flash of loading state
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/dashboard" />;
+  }
+
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [revenueTrend, setRevenueTrend] = useState([]);
   const [branchPerf, setBranchPerf] = useState([]);
   const [customerStats, setCustomerStats] = useState({});
@@ -23,12 +29,10 @@ const ExecutiveDashboard = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
 
   useEffect(() => {
-    if (user?.role !== 'ADMIN') return;
-
     const fetchAll = async () => {
       try {
         const [
-          revRes, branchRes, custRes, maintRes, 
+          revRes, branchRes, custRes, maintRes,
           topCustRes, profRes, suppRes, logRes, vehRes
         ] = await Promise.all([
           api.get('/reports/revenue/monthly'),
@@ -51,7 +55,6 @@ const ExecutiveDashboard = () => {
         setSupportStats(suppRes.data);
         setRecentLogs(logRes.data);
 
-        // Compute KPIs that span multiple endpoints
         const totalRev = profRes.data.reduce((sum, v) => sum + v.revenue, 0);
         setTotalRevenue(totalRev);
 
@@ -63,19 +66,25 @@ const ExecutiveDashboard = () => {
         setFleetUtilization(util);
 
       } catch (err) {
-        console.error("Failed to load dashboard data", err);
+        console.error('Failed to load dashboard data', err);
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
     };
     fetchAll();
-  }, [user]);
-
-  if (user?.role !== 'ADMIN') {
-    return <Navigate to="/dashboard" />;
-  }
+  }, []);
 
   if (loading) return <div className="page active"><p>Loading executive insights...</p></div>;
+  if (fetchError) return (
+    <div className="page active">
+      <div style={{ textAlign: 'center', padding: '60px', color: 'var(--danger)' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+        <h2>Failed to load dashboard data</h2>
+        <p style={{ color: 'var(--text3)', marginTop: '8px' }}>Make sure the backend server is running and you have Admin access.</p>
+      </div>
+    </div>
+  );
 
   const fleetHealthData = [
     { name: 'Healthy', value: vehicleProfit.length > 0 ? (100 - (maintenanceStats.underMaintenance / vehicleProfit.length) * 100) : 100, color: '#38a169' },

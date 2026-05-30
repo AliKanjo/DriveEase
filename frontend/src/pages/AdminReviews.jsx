@@ -26,7 +26,6 @@ const AdminReviews = () => {
       fetchReviews();
     } catch (err) {
       console.error(err);
-      alert('Failed to update review visibility');
     }
   };
 
@@ -37,7 +36,6 @@ const AdminReviews = () => {
       fetchReviews();
     } catch (err) {
       console.error(err);
-      alert('Failed to delete review');
     }
   };
 
@@ -47,8 +45,8 @@ const AdminReviews = () => {
     <div className="page active">
       <div className="section-title">Review Moderation</div>
       
-      <div className="table-card">
-        <table className="data-table">
+      <div className="table-wrap">
+        <table>
           <thead>
             <tr>
               <th>ID</th>

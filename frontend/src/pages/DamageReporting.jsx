@@ -12,6 +12,8 @@ const DamageReporting = () => {
   const [bookingId, setBookingId] = useState('');
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState('MINOR');
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
 
   const fetchReports = async () => {
     try {
@@ -44,8 +46,10 @@ const DamageReporting = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    setFormError('');
+    setFormSuccess('');
     if (!vehicleId) {
-      alert("Please select a vehicle");
+      setFormError('Please select a vehicle.');
       return;
     }
     try {
@@ -57,10 +61,10 @@ const DamageReporting = () => {
       });
       setVehicleId(''); setBookingId(''); setDescription(''); setSeverity('MINOR');
       fetchReports();
-      alert("Damage report submitted successfully");
+      setFormSuccess('Damage report submitted successfully.');
     } catch (err) {
       console.error(err);
-      alert("Failed to submit report");
+      setFormError('Failed to submit report. Please try again.');
     }
   };
 
@@ -110,7 +114,9 @@ const DamageReporting = () => {
             <label className="form-label">Description</label>
             <textarea className="search-input" style={{ width: '100%', marginBottom: '15px', minHeight: '80px', padding: '10px' }} value={description} onChange={e => setDescription(e.target.value)} required />
             
-            <button type="submit" className="btn btn-brand" style={{ width: '100%' }}>Submit Report</button>
+            {formError && <div style={{ color: 'var(--danger)', fontSize: '13px', marginBottom: '10px' }}>{formError}</div>}
+            {formSuccess && <div style={{ color: '#38a169', fontSize: '13px', marginBottom: '10px' }}>{formSuccess}</div>}
+            <button type="submit" className="btn btn-green" style={{ width: '100%' }}>Submit Report</button>
           </form>
         </div>
         
