@@ -19,9 +19,9 @@ const Reports = () => {
           api.get('/users')
         ]);
         setData({
-          vehicles: vehRes.data,
-          bookings: bookRes.data,
-          users: userRes.data
+          vehicles: Array.isArray(vehRes.data) ? vehRes.data : [],
+          bookings: Array.isArray(bookRes.data) ? bookRes.data : [],
+          users: Array.isArray(userRes.data) ? userRes.data : []
         });
       } catch (err) {
         console.error("Failed to load report data", err);
