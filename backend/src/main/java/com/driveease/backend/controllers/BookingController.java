@@ -1,6 +1,7 @@
 package com.driveease.backend.controllers;
 
 import com.driveease.backend.dto.BookingRequest;
+import com.driveease.backend.dto.UpdateBookingRequest;
 import com.driveease.backend.models.Booking;
 import com.driveease.backend.models.enums.BookingStatus;
 import com.driveease.backend.services.BookingService;
@@ -34,13 +35,13 @@ public class BookingController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
     public ResponseEntity<List<Booking>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
     public ResponseEntity<Booking> updateBookingStatus(@PathVariable Long id, @RequestParam BookingStatus status) {
         return ResponseEntity.ok(bookingService.updateBookingStatus(id, status));
     }
@@ -52,9 +53,9 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.updateBookingStatus(id, BookingStatus.CANCELLED));
     }
 
-    @PutMapping("/{id}/modify")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    public ResponseEntity<Booking> modifyBookingDates(@PathVariable Long id, @RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
-        return ResponseEntity.ok(bookingService.modifyBookingDates(id, startDate, endDate));
+    public ResponseEntity<Booking> modifyBookingDates(Authentication authentication, @PathVariable Long id, @RequestBody UpdateBookingRequest request) {
+        return ResponseEntity.ok(bookingService.updateBookingDates(id, authentication.getName(), request));
     }
 }

@@ -41,25 +41,57 @@ const Navbar = () => {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      fetchNotifications();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (!user) return null; // Don't show navbar on login/register pages
 
   const isAdmin = user.role === 'ADMIN';
+  const isEmployee = user.role === 'EMPLOYEE';
+  const isStaff = isAdmin || isEmployee;
 
-  const tabs = isAdmin
-    ? [
-        { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
-        { id: 'vehicles', label: 'Fleet', path: '/vehicles' },
-        { id: 'bookings', label: 'Bookings', path: '/bookings' },
-        { id: 'users', label: 'Users', path: '/users' },
-        { id: 'reports', label: 'Reports', path: '/reports' },
-        { id: 'profile', label: 'Profile', path: '/profile' }
-      ]
-    : [
-        { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
-        { id: 'newbooking', label: 'Book a Car', path: '/newbooking' },
-        { id: 'bookings', label: 'My Bookings', path: '/bookings' },
-        { id: 'profile', label: 'Profile', path: '/profile' }
-      ];
+  let tabs = [];
+  if (isAdmin) {
+    tabs = [
+      { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
+      { id: 'executive', label: 'Executive', path: '/admin/executive' },
+      { id: 'branches', label: 'Branches', path: '/admin/branches' },
+      { id: 'vehicles', label: 'Fleet', path: '/vehicles' },
+      { id: 'damages', label: 'Damage', path: '/admin/damage-reports' },
+      { id: 'bookings', label: 'Bookings', path: '/bookings' },
+      { id: 'users', label: 'Users', path: '/users' },
+      { id: 'reports', label: 'Reports', path: '/reports' },
+      { id: 'adminReviews', label: 'Reviews', path: '/admin/reviews' },
+      { id: 'adminTickets', label: 'Support', path: '/admin/tickets' },
+      { id: 'adminSms', label: 'SMS Log', path: '/admin/sms' },
+      { id: 'auditLogs', label: 'Audit Logs', path: '/admin/audit-logs' },
+      { id: 'profile', label: 'Profile', path: '/profile' }
+    ];
+  } else if (isEmployee) {
+    tabs = [
+      { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
+      { id: 'vehicles', label: 'Fleet', path: '/vehicles' },
+      { id: 'damages', label: 'Damage', path: '/admin/damage-reports' },
+      { id: 'bookings', label: 'Bookings', path: '/bookings' },
+      { id: 'adminReviews', label: 'Reviews', path: '/admin/reviews' },
+      { id: 'adminTickets', label: 'Support', path: '/admin/tickets' },
+      { id: 'profile', label: 'Profile', path: '/profile' }
+    ];
+  } else {
+    tabs = [
+      { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
+      { id: 'newbooking', label: 'Book a Car', path: '/newbooking' },
+      { id: 'bookings', label: 'My Bookings', path: '/bookings' },
+      { id: 'tickets', label: 'Support', path: '/tickets' },
+      { id: 'profile', label: 'Profile', path: '/profile' }
+    ];
+  }
 
   return (
     <nav className="nav">
@@ -96,7 +128,14 @@ const Navbar = () => {
           
           {showNotifs && (
             <div style={{ position: 'absolute', top: '40px', right: '0', background: 'var(--card)', width: '300px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid var(--border)', zIndex: 100, maxHeight: '400px', overflowY: 'auto' }}>
-              <div style={{ padding: '12px 16px', fontWeight: 'bold', borderBottom: '1px solid var(--border)', fontSize: '14px', color: 'var(--text)' }}>Notifications</div>
+              <div style={{ padding: '12px 16px', fontWeight: 'bold', borderBottom: '1px solid var(--border)', fontSize: '14px', color: 'var(--text)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                Notifications
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <button onClick={markAllAsRead} style={{ fontSize: '11px', background: 'none', border: 'none', color: '#3498db', cursor: 'pointer', fontWeight: 'normal' }}>
+                    Mark all read
+                  </button>
+                )}
+              </div>
               {notifications.length === 0 ? (
                 <div style={{ padding: '16px', color: 'var(--text3)', fontSize: '13px', textAlign: 'center' }}>No notifications</div>
               ) : (

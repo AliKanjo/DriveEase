@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import com.driveease.backend.services.AuditService;
 
 @RestController
 @RequestMapping("/api/users")
@@ -20,6 +21,9 @@ public class UserController {
 
     @Autowired
     private VehicleRepository vehicleRepository;
+
+    @Autowired
+    private AuditService auditService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -54,6 +58,8 @@ public class UserController {
         user.setGender(request.getGender());
         userRepository.save(user);
 
+        auditService.logAction(user.getUsername(), "UPDATE_PROFILE", "User", String.valueOf(user.getId()));
+
         user.setPasswordHash(null);
         return ResponseEntity.ok(user);
     }
@@ -79,6 +85,7 @@ public class UserController {
             }
         }
 
+        auditService.logAction(user.getUsername(), "DELETE_ACCOUNT", "User", String.valueOf(user.getId()));
         userRepository.delete(user);
         return ResponseEntity.ok("Account deleted successfully");
     }

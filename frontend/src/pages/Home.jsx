@@ -1,7 +1,23 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { getVehicleImage } from '../utils/imageHelpers';
 
 const Home = () => {
+  const [recommendedVehicles, setRecommendedVehicles] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const res = await api.get('/vehicles/recommended');
+        setRecommendedVehicles(res.data);
+      } catch (err) {
+        console.error('Failed to load recommendations', err);
+      }
+    };
+    fetchRecommendations();
+  }, []);
   return (
     <div>
       <section className="container" style={{ padding: '8rem 1.5rem', textAlign: 'center' }}>
@@ -33,6 +49,25 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {recommendedVehicles.length > 0 && (
+        <section className="container" style={{ padding: '2rem 1.5rem 6rem 1.5rem' }}>
+          <h2 style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>Recommended For You</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+            {recommendedVehicles.map(v => (
+              <div key={v.id} className="glass-panel" style={{ display: 'flex', flexDirection: 'column' }}>
+                <img src={getVehicleImage(v)} alt={v.brand} style={{ width: '100%', height: '180px', objectFit: 'contain', marginBottom: '1rem' }} />
+                <h3 style={{ marginBottom: '0.5rem' }}>{v.brand} {v.model}</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>{v.transmission} • {v.fuelType}</p>
+                <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--accent)' }}>${v.pricePerDay}/day</span>
+                  <button className="btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => navigate('/newbooking')}>Book Now</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

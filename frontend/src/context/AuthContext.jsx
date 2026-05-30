@@ -21,6 +21,22 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     const response = await api.post('/auth/login', { username, password });
     const { accessToken, username: userUsername, role } = response.data;
+    
+    if (accessToken === 'REQUIRE_2FA') {
+      return response.data; // Return so Login.jsx can prompt for code
+    }
+
+    localStorage.setItem('token', accessToken);
+    localStorage.setItem('username', userUsername);
+    localStorage.setItem('role', role);
+    setUser({ username: userUsername, role });
+    return response.data;
+  };
+
+  const verify2fa = async (username, password, code) => {
+    const response = await api.post('/auth/verify-2fa', { username, password, code });
+    const { accessToken, username: userUsername, role } = response.data;
+    
     localStorage.setItem('token', accessToken);
     localStorage.setItem('username', userUsername);
     localStorage.setItem('role', role);
@@ -40,7 +56,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, verify2fa, register, logout, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );

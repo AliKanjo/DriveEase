@@ -7,8 +7,10 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [require2fa, setRequire2fa] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
   const navigate = useNavigate();
-  const { login, user } = useContext(AuthContext);
+  const { login, verify2fa, user } = useContext(AuthContext);
 
   useEffect(() => {
     if (user) {
@@ -21,8 +23,17 @@ const Login = () => {
     setError('');
     setIsSubmitting(true);
     try {
-      await login(username, password);
-      navigate('/dashboard');
+      if (require2fa) {
+        await verify2fa(username, password, twoFactorCode);
+        navigate('/dashboard');
+      } else {
+        const res = await login(username, password);
+        if (res.accessToken === 'REQUIRE_2FA') {
+          setRequire2fa(true);
+        } else {
+          navigate('/dashboard');
+        }
+      }
     } catch (err) {
       setError(err.response?.data || 'Login failed. Please check your credentials.');
     } finally {
@@ -67,8 +78,25 @@ const Login = () => {
             required
           />
           
+          {require2fa && (
+            <>
+              <div style={{ padding: '10px', background: '#ebf4ff', color: '#2b6cb0', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', textAlign: 'center' }}>
+                A 2FA code has been sent to your device. Please enter it below.
+              </div>
+              <label className="form-label">2FA Code</label>
+              <input 
+                className="form-input" 
+                type="text" 
+                placeholder="6-digit code"
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value)}
+                required
+              />
+            </>
+          )}
+
           <button type="submit" className="btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in...' : 'Sign In'}
+            {isSubmitting ? (require2fa ? 'Verifying...' : 'Signing in...') : (require2fa ? 'Verify 2FA' : 'Sign In')}
           </button>
         </form>
       </div>

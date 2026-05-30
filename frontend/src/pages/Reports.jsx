@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Reports = () => {
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,21 @@ const Reports = () => {
     const vRev = vBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
     return { ...v, timesRented: vBookings.length, revenueGenerated: vRev };
   }).sort((a, b) => b.timesRented - a.timesRented).slice(0, 5);
+  
+  // Recharts Data
+  const statusColors = {
+    PENDING: '#dd6b20',
+    APPROVED: '#ecc94b',
+    ACTIVE: '#3182ce',
+    COMPLETED: '#38a169',
+    CANCELLED: '#e53e3e'
+  };
+  
+  const statusData = Object.keys(statusColors).map(status => ({
+    name: status,
+    value: bookings.filter(b => b.status === status).length,
+    color: statusColors[status]
+  })).filter(d => d.value > 0);
 
   return (
     <div className="page active">
@@ -115,31 +131,58 @@ const Reports = () => {
           </div>
         </div>
 
-        {/* Booking Status Breakdown (CSS Chart) */}
+        {/* Booking Status Breakdown (Recharts) */}
         <div>
           <div className="section-title" style={{ fontSize: '18px', marginBottom: '16px' }}>Booking Status Breakdown</div>
-          <div className="profile-card" style={{ background: 'var(--card)', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+          <div className="profile-card" style={{ background: 'var(--card)', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow)', border: '1px solid var(--border)', height: '100%', minHeight: '300px' }}>
             
-            {['PENDING', 'APPROVED', 'ACTIVE', 'COMPLETED', 'CANCELLED'].map(status => {
-              const count = bookings.filter(b => b.status === status).length;
-              const percent = bookings.length > 0 ? (count / bookings.length) * 100 : 0;
-              const color = status === 'COMPLETED' ? '#5cb85c' : status === 'ACTIVE' ? '#3182ce' : status === 'CANCELLED' ? '#e53e3e' : '#dd6b20';
-              
-              return (
-                <div key={status} style={{ marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>
-                    <span>{status}</span>
-                    <span>{count} ({percent.toFixed(1)}%)</span>
-                  </div>
-                  <div style={{ background: 'var(--bg2)', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
-                    <div style={{ background: color, height: '100%', width: `${percent}%`, transition: 'width 1s ease-in-out' }}></div>
-                  </div>
-                </div>
-              );
-            })}
-            {bookings.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text3)' }}>No bookings to analyze</p>}
+            {bookings.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                    nameKey="name"
+                    label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [value, 'Count']} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p style={{ textAlign: 'center', color: 'var(--text3)' }}>No bookings to analyze</p>
+            )}
 
           </div>
+        </div>
+      </div>
+      
+      {/* Revenue by Vehicle Chart */}
+      <div style={{ marginTop: '30px' }}>
+        <div className="section-title" style={{ fontSize: '18px', marginBottom: '16px' }}>Revenue by Top Vehicles</div>
+        <div className="profile-card" style={{ background: 'var(--card)', padding: '24px', borderRadius: '12px', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+          {vehicleStats.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={vehicleStats}>
+                <XAxis dataKey="brand" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Revenue']} />
+                <Legend />
+                <Bar dataKey="revenueGenerated" name="Revenue" fill="#3182ce" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p style={{ textAlign: 'center', color: 'var(--text3)' }}>No vehicle data available</p>
+          )}
         </div>
       </div>
 

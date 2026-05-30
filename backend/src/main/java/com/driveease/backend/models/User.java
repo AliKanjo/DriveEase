@@ -40,6 +40,20 @@ public class User {
     @Column
     private String gender;
 
+    @Column(name = "two_factor_code")
+    private String twoFactorCode;
+
+    @Column(name = "two_factor_expiry")
+    private LocalDateTime twoFactorExpiry;
+
+    @Column(name = "reward_points", nullable = false)
+    @Builder.Default
+    private Integer rewardPoints = 0;
+
+    @Column(name = "membership_level", nullable = false)
+    @Builder.Default
+    private String membershipLevel = "BRONZE";
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

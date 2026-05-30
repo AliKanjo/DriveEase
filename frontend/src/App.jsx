@@ -15,6 +15,14 @@ import Reports from './pages/Reports';
 import Profile from './pages/Profile';
 import NewBooking from './pages/NewBooking';
 import Payment from './pages/Payment';
+import AdminReviews from './pages/AdminReviews';
+import AdminTickets from './pages/AdminTickets';
+import CustomerTickets from './pages/CustomerTickets';
+import AdminSms from './pages/AdminSms';
+import AuditLogs from './pages/AuditLogs';
+import BranchManagement from './pages/BranchManagement';
+import DamageReporting from './pages/DamageReporting';
+import ExecutiveDashboard from './pages/ExecutiveDashboard';
 
 function App() {
   return (
@@ -36,6 +44,14 @@ function App() {
             <Route path="/newbooking" element={<NewBooking />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/invoice/:id" element={<Invoice />} />
+            <Route path="/admin/reviews" element={<AdminReviews />} />
+            <Route path="/admin/tickets" element={<AdminTickets />} />
+            <Route path="/admin/sms" element={<AdminSms />} />
+            <Route path="/admin/audit-logs" element={<AuditLogs />} />
+            <Route path="/admin/branches" element={<BranchManagement />} />
+            <Route path="/admin/damage-reports" element={<DamageReporting />} />
+            <Route path="/admin/executive" element={<ExecutiveDashboard />} />
+            <Route path="/tickets" element={<CustomerTickets />} />
           </Routes>
         </div>
       </Router>

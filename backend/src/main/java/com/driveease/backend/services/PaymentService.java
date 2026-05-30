@@ -6,7 +6,9 @@ import com.driveease.backend.models.Payment;
 import com.driveease.backend.models.User;
 import com.driveease.backend.models.enums.BookingStatus;
 import com.driveease.backend.models.enums.PaymentStatus;
+import com.driveease.backend.models.Notification;
 import com.driveease.backend.repositories.BookingRepository;
+import com.driveease.backend.repositories.NotificationRepository;
 import com.driveease.backend.repositories.PaymentRepository;
 import com.driveease.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ public class PaymentService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     public Payment processPayment(String username, PaymentRequest request) {
         User user = userRepository.findByUsername(username)
@@ -52,6 +57,13 @@ public class PaymentService {
 
         booking.setStatus(BookingStatus.APPROVED);
         bookingRepository.save(booking);
+
+        Notification notif = Notification.builder()
+                .user(user)
+                .message("Payment of $" + payment.getAmount() + " received for Booking #" + booking.getId() + ".")
+                .isRead(false)
+                .build();
+        notificationRepository.save(notif);
 
         return paymentRepository.save(payment);
     }

@@ -6,8 +6,10 @@ import { useNavigate } from 'react-router-dom';
 const Profile = () => {
   const { user, logout } = useContext(AuthContext);
   const [profileData, setProfileData] = useState(null);
+  const [loyaltyData, setLoyaltyData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [redeemPointsAmount, setRedeemPointsAmount] = useState(500);
   const [editForm, setEditForm] = useState({ email: '', gender: '' });
   const navigate = useNavigate();
 
@@ -16,6 +18,11 @@ const Profile = () => {
       try {
         const res = await api.get('/users/me');
         setProfileData(res.data);
+        
+        if (user.role === 'CUSTOMER') {
+          const loyaltyRes = await api.get('/loyalty/my');
+          setLoyaltyData(loyaltyRes.data);
+        }
       } catch (err) {
         console.error("Failed to fetch profile", err);
       } finally {
@@ -36,6 +43,18 @@ const Profile = () => {
     } catch (err) {
       console.error(err);
       alert(err.response?.data || 'Failed to update profile');
+    }
+  };
+
+  const handleRedeem = async () => {
+    try {
+      const res = await api.post(`/loyalty/redeem?points=${redeemPointsAmount}`);
+      alert(`Success! Your promo code is: ${res.data.code}\nDiscount: ${res.data.discountPercentage}% off!`);
+      const loyaltyRes = await api.get('/loyalty/my');
+      setLoyaltyData(loyaltyRes.data);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data || 'Failed to redeem points');
     }
   };
 
@@ -62,13 +81,28 @@ const Profile = () => {
       
       <div className="profile-card" style={{ background: 'var(--card)', borderRadius: 'var(--r)', padding: '24px', boxShadow: 'var(--shadow)', border: '1px solid var(--border)', maxWidth: '800px', margin: '0 auto' }}>
         <div className="profile-header" style={{ display: 'flex', alignItems: 'center', gap: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '24px', marginBottom: '24px' }}>
-          <div className="profile-avatar" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--accent)', color: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: 'bold', fontFamily: '"Syne", sans-serif' }}>
-            {profileData.username.charAt(0).toUpperCase()}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div className="profile-name" style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: '"Syne", sans-serif', color: 'var(--text)' }}>
-              {profileData.username}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--brand), #3b82f6)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: 'bold' }}>
+              {profileData.username.charAt(0).toUpperCase()}
             </div>
+            <div>
+              <h2 style={{ margin: 0, color: 'var(--text)' }}>{profileData.username}</h2>
+              <div style={{ color: 'var(--text3)', fontSize: '14px', marginTop: '4px' }}>Member since {new Date(profileData.createdAt).toLocaleDateString()}</div>
+              
+              {loyaltyData && (
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  <span style={{ background: loyaltyData.membershipLevel === 'PLATINUM' ? '#e5e4e2' : loyaltyData.membershipLevel === 'GOLD' ? '#ffd700' : loyaltyData.membershipLevel === 'SILVER' ? '#c0c0c0' : '#cd7f32', color: '#000', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                    {loyaltyData.membershipLevel} TIER
+                  </span>
+                  <span style={{ background: 'var(--bg2)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    ⭐ {loyaltyData.points} Points
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div style={{ flex: 1, textAlign: 'right' }}>
             <div className="profile-role" style={{ color: 'var(--text3)', fontSize: '14px', marginTop: '4px', marginBottom: '8px' }}>
               {profileData.role === 'ADMIN' ? 'Administrator Account' : 'Customer Account'}
             </div>
@@ -140,6 +174,24 @@ const Profile = () => {
           </div>
 
         </div>
+        
+        {loyaltyData && !isEditing && (
+          <div style={{ marginTop: '30px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+            <h3>Redeem Loyalty Points</h3>
+            <p style={{ color: 'var(--text3)', fontSize: '14px', marginBottom: '16px' }}>Turn your points into discount promo codes! (500 pts = 5% off)</p>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input 
+                type="number" 
+                min="500" 
+                step="100" 
+                value={redeemPointsAmount} 
+                onChange={e => setRedeemPointsAmount(parseInt(e.target.value))} 
+                style={{ padding: '10px', border: '1px solid var(--border)', borderRadius: '4px', width: '150px' }}
+              />
+              <button className="btn btn-brand" onClick={handleRedeem}>Redeem Points</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

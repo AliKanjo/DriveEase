@@ -7,6 +7,8 @@ import { getVehicleImage } from '../utils/imageHelpers';
 const Bookings = () => {
   const { user } = useContext(AuthContext);
   const isAdmin = user?.role === 'ADMIN';
+  const isEmployee = user?.role === 'EMPLOYEE';
+  const isStaff = isAdmin || isEmployee;
   const navigate = useNavigate();
 
   const [bookings, setBookings] = useState([]);
@@ -20,7 +22,7 @@ const Bookings = () => {
 
   const fetchBookings = async () => {
     try {
-      const res = await api.get(isAdmin ? '/bookings' : '/bookings/my');
+      const res = await api.get(isStaff ? '/bookings' : '/bookings/my');
       setBookings(res.data);
     } catch (err) {
       console.error(err);
@@ -31,7 +33,7 @@ const Bookings = () => {
 
   useEffect(() => {
     fetchBookings();
-  }, [isAdmin]);
+  }, [isStaff]);
 
   const confirmBooking = async (id) => {
     try {
@@ -56,13 +58,25 @@ const Bookings = () => {
 
   const submitModify = async () => {
     try {
-      await api.put(`/bookings/${editingBooking.id}/modify?startDate=${newStartDate}&endDate=${newEndDate}`);
+      await api.put(`/bookings/${editingBooking.id}`, { startDate: newStartDate, endDate: newEndDate });
       setEditingBooking(null);
       fetchBookings();
       alert('Dates modified and total price recalculated successfully!');
     } catch (err) {
       console.error(err);
-      alert('Failed to modify booking dates');
+      alert(err.response?.data?.message || err.response?.data || 'Failed to modify booking dates');
+    }
+  };
+
+  const requestExtension = async (booking) => {
+    const extDate = window.prompt("Enter new return date (YYYY-MM-DD):");
+    if (!extDate) return;
+    try {
+      await api.post(`/extensions/booking/${booking.id}`, { newEndDate: extDate });
+      alert("Extension requested successfully! Pending admin approval.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to request extension.");
     }
   };
 
@@ -86,9 +100,9 @@ const Bookings = () => {
       <div className="section-hdr">
         <div>
           <div className="section-title">Bookings</div>
-          <div className="section-sub">{isAdmin ? 'All rental reservations' : 'Your rental reservations'}</div>
+          <div className="section-sub">{isStaff ? 'All rental reservations' : 'Your rental reservations'}</div>
         </div>
-        {!isAdmin && (
+        {!isStaff && (
           <Link to="/newbooking" className="btn btn-green" style={{textDecoration: 'none'}}>+ New Booking</Link>
         )}
       </div>
@@ -115,7 +129,7 @@ const Bookings = () => {
           <thead>
             <tr>
               <th>Booking #</th>
-              {isAdmin && <th>Customer</th>}
+              {isStaff && <th>Customer</th>}
               <th>Vehicle</th>
               <th>Start</th>
               <th>End</th>
@@ -128,7 +142,7 @@ const Bookings = () => {
             {filteredBookings.map(b => (
               <tr key={b.id}>
                 <td style={{ fontWeight: 600, fontFamily: 'monospace' }}>#{b.id}</td>
-                {isAdmin && <td>User #{b.userId || 'N/A'}</td>}
+                {isStaff && <td>User #{b.userId || 'N/A'}</td>}
                 <td>
                   <div className="flex-center">
                     <img src={getVehicleImage(b.vehicle)} alt={b.vehicle?.brand} className="vehicle-thumb" style={{ objectFit: 'cover' }} />
@@ -140,24 +154,39 @@ const Bookings = () => {
                 <td className="text-bold">${b.totalPrice}</td>
                 <td><span className={`badge badge-${badgeStatus(b.status)}`}>{b.status}</span></td>
                 <td>
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    {isAdmin && b.status === 'PENDING' && (
-                      <button className="btn btn-sm btn-green" onClick={() => confirmBooking(b.id)}>Confirm</button>
-                    )}
-                    {!isAdmin && b.status === 'APPROVED' && (
-                      <button className="btn btn-sm btn-green" onClick={() => goToPayment(b)}>Pay Now</button>
-                    )}
-                    {!isAdmin && (b.status === 'PENDING' || b.status === 'APPROVED') && (
-                      <button className="btn btn-sm btn-outline" onClick={() => {
-                        setEditingBooking(b);
-                        setNewStartDate(b.startDate);
-                        setNewEndDate(b.endDate);
-                      }}>Modify</button>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {isStaff ? (
+                      <>
+                        {b.status === 'PENDING' && (
+                          <button className="btn btn-sm btn-green" onClick={() => confirmBooking(b.id)}>Approve</button>
+                        )}
+                        <button className="btn btn-sm btn-info" onClick={() => {
+                          setEditingBooking(b);
+                          setNewStartDate(b.startDate);
+                          setNewEndDate(b.endDate);
+                        }}>Modify</button>
+                      </>
+                    ) : (
+                      <>
+                        {(b.status === 'PENDING' || b.status === 'APPROVED') && (
+                          <button className="btn btn-sm btn-brand" onClick={() => goToPayment(b)}>Pay Now</button>
+                        )}
+                        {b.status === 'PENDING' && (
+                          <button className="btn btn-sm btn-info" onClick={() => {
+                            setEditingBooking(b);
+                            setNewStartDate(b.startDate);
+                            setNewEndDate(b.endDate);
+                          }}>Edit Dates</button>
+                        )}
+                        {(b.status === 'ACTIVE') && (
+                          <button className="btn btn-sm btn-info" onClick={() => requestExtension(b)}>Extend</button>
+                        )}
+                      </>
                     )}
                     {(b.status === 'ACTIVE' || b.status === 'COMPLETED') && (
                       <button className="btn btn-sm btn-outline" onClick={() => navigate(`/invoice/${b.id}`, { state: { booking: b } })}>📄 Invoice</button>
                     )}
-                    {b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && b.status !== 'ACTIVE' && (
+                    {(b.status !== 'CANCELLED' && b.status !== 'COMPLETED') && (
                       <button className="btn btn-sm btn-danger" onClick={() => cancelBooking(b.id)}>Cancel</button>
                     )}
                   </div>
@@ -165,7 +194,7 @@ const Bookings = () => {
               </tr>
             ))}
             {filteredBookings.length === 0 && (
-              <tr><td colSpan={isAdmin ? 8 : 7} style={{textAlign: 'center'}}>No bookings found</td></tr>
+              <tr><td colSpan={isStaff ? 8 : 7} style={{textAlign: 'center'}}>No bookings found</td></tr>
             )}
           </tbody>
         </table>

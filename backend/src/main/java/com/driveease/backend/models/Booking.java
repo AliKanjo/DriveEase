@@ -29,6 +29,14 @@ public class Booking {
     @ToString.Exclude
     private Vehicle vehicle;
 
+    @ManyToOne
+    @JoinColumn(name = "pickup_branch_id")
+    private Branch pickupBranch;
+
+    @ManyToOne
+    @JoinColumn(name = "return_branch_id")
+    private Branch returnBranch;
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 

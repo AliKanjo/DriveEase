@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import { getVehicleImage } from '../utils/imageHelpers';
 
+import { AuthContext } from '../context/AuthContext';
+
 const Vehicles = () => {
+  const { user } = useContext(AuthContext);
+  const isAdmin = user?.role === 'ADMIN';
+  const isEmployee = user?.role === 'EMPLOYEE';
+  const isStaff = isAdmin || isEmployee;
+  
   const [vehicles, setVehicles] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -17,13 +25,18 @@ const Vehicles = () => {
     brand: '', model: '', year: new Date().getFullYear(),
     pricePerDay: 50, transmission: 'Automatic', fuelType: 'Gas',
     licensePlate: '', images: '', status: 'AVAILABLE', capacity: 5,
-    mileage: 0, location: '', features: ''
+    licensePlate: '', images: '', status: 'AVAILABLE', capacity: 5,
+    mileage: 0, location: '', features: '', currentBranch: null
   });
 
   const fetchVehicles = async () => {
     try {
-      const res = await api.get('/vehicles');
-      setVehicles(res.data);
+      const [vehRes, branchRes] = await Promise.all([
+        api.get('/vehicles'),
+        api.get('/branches')
+      ]);
+      setVehicles(vehRes.data);
+      setBranches(branchRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -47,6 +60,36 @@ const Vehicles = () => {
     }
   };
 
+  const handleScheduleMaintenance = async (id) => {
+    const costStr = window.prompt("Enter estimated maintenance cost ($):");
+    if (!costStr) return;
+    const desc = window.prompt("Enter maintenance description:");
+    
+    try {
+      await api.post(`/maintenance/vehicle/${id}`, {
+        maintenanceDate: new Date().toISOString().split('T')[0],
+        cost: parseFloat(costStr),
+        description: desc || 'Regular Maintenance'
+      });
+      fetchVehicles();
+      alert("Maintenance scheduled successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to schedule maintenance.");
+    }
+  };
+
+  const handleCompleteMaintenance = async (id) => {
+    try {
+      await api.put(`/maintenance/vehicle/${id}/complete`);
+      fetchVehicles();
+      alert("Vehicle marked as Available.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to complete maintenance.");
+    }
+  };
+
   const handleOpenModal = (vehicle = null) => {
     if (vehicle) {
       setEditingVehicle(vehicle);
@@ -57,7 +100,8 @@ const Vehicles = () => {
         brand: '', model: '', year: new Date().getFullYear(),
         pricePerDay: 50, transmission: 'Automatic', fuelType: 'Gas',
         licensePlate: '', images: '', status: 'AVAILABLE', capacity: 5,
-        mileage: 0, location: '', features: ''
+        licensePlate: '', images: '', status: 'AVAILABLE', capacity: 5,
+        mileage: 0, location: '', features: '', currentBranch: null
       });
     }
     setSelectedFiles([]);
@@ -82,7 +126,11 @@ const Vehicles = () => {
         uploadedImageUrls = [...uploadedImageUrls, ...urls]; // Append new uploads to existing ones
       }
 
-      const payload = { ...formData, images: uploadedImageUrls.join(',') };
+      const payload = { 
+        ...formData, 
+        images: uploadedImageUrls.join(','),
+        currentBranch: formData.currentBranchId ? { id: parseInt(formData.currentBranchId) } : null
+      };
 
       if (editingVehicle) {
         await api.put(`/vehicles/${editingVehicle.id}`, payload);
@@ -112,10 +160,12 @@ const Vehicles = () => {
     <div className="page active">
       <div className="section-hdr">
         <div>
-          <div className="section-title">Vehicle Fleet</div>
-          <div className="section-sub">Manage your rental inventory</div>
+          <div className="section-title">Fleet Directory</div>
+          <div className="section-sub">Browse and manage available vehicles</div>
         </div>
-        <button className="btn btn-green" onClick={() => handleOpenModal()}>+ Add Vehicle</button>
+        {isStaff && (
+          <button className="btn btn-brand" onClick={() => handleOpenModal()}>+ Add Vehicle</button>
+        )}
       </div>
 
       <div className="table-wrap">
@@ -146,6 +196,7 @@ const Vehicles = () => {
               <th>Transmission</th>
               <th>Year</th>
               <th>Plate</th>
+              <th>Branch</th>
               <th>Daily Rate</th>
               <th>Status</th>
               <th>Actions</th>
@@ -166,6 +217,7 @@ const Vehicles = () => {
                 <td>{v.transmission}</td>
                 <td>{v.year}</td>
                 <td style={{ fontFamily: 'monospace' }}>{v.licensePlate || 'N/A'}</td>
+                <td style={{ fontSize: '12px' }}>{v.currentBranch ? v.currentBranch.name : 'Unassigned'}</td>
                 <td className="text-bold">${v.pricePerDay}/day</td>
                 <td>
                   <span className={`badge badge-${v.status === 'AVAILABLE' ? 'available' : 'rented'}`}>
@@ -173,9 +225,23 @@ const Vehicles = () => {
                   </span>
                 </td>
                 <td>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button className="btn btn-sm btn-info" onClick={() => handleOpenModal(v)}>Edit</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(v.id)}>Delete</button>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {isStaff && (
+                    <>
+                      <button className="btn btn-sm btn-info" onClick={() => handleOpenModal(v)}>Edit</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(v.id)}>Delete</button>
+                    </>
+                  )}
+                  {isStaff && (
+                    <>
+                      {v.status === 'AVAILABLE' && (
+                        <button className="btn btn-sm btn-outline" onClick={() => handleScheduleMaintenance(v.id)}>Maintenance</button>
+                      )}
+                      {v.status === 'MAINTENANCE' && (
+                        <button className="btn btn-sm btn-green" onClick={() => handleCompleteMaintenance(v.id)}>Complete Maint.</button>
+                      )}
+                    </>
+                  )}
                   </div>
                 </td>
               </tr>
@@ -247,9 +313,20 @@ const Vehicles = () => {
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Location</label>
-                <input className="search-input" style={{ width: '100%' }} placeholder="e.g. Istanbul" value={formData.location || ''} onChange={e => setFormData({...formData, location: e.target.value})} />
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Location (City)</label>
+                  <input className="search-input" style={{ width: '100%' }} placeholder="e.g. Istanbul" value={formData.location || ''} onChange={e => setFormData({...formData, location: e.target.value})} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px' }}>Assigned Branch</label>
+                  <select className="filter-select" style={{ width: '100%' }} value={formData.currentBranchId || (formData.currentBranch ? formData.currentBranch.id : '')} onChange={e => setFormData({...formData, currentBranchId: e.target.value})}>
+                    <option value="">Unassigned</option>
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>

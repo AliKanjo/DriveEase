@@ -43,4 +43,16 @@ public class NotificationController {
         notificationRepository.save(notification);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping("/read-all")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    public ResponseEntity<?> markAllAsRead(Authentication authentication) {
+        User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+        List<Notification> unreadNotifications = notificationRepository.findByUserIdAndIsReadFalse(user.getId());
+        for (Notification notification : unreadNotifications) {
+            notification.setRead(true);
+        }
+        notificationRepository.saveAll(unreadNotifications);
+        return ResponseEntity.ok().build();
+    }
 }

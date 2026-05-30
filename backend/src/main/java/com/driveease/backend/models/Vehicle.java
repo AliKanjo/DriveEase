@@ -21,6 +21,10 @@ public class Vehicle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "branch_id")
+    private Branch currentBranch;
+
     @Column(nullable = false)
     private String brand;
 
