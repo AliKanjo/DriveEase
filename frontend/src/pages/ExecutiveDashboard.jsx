@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer 
@@ -9,11 +8,6 @@ import {
 
 const ExecutiveDashboard = () => {
   const { user } = useContext(AuthContext);
-
-  // Guard FIRST — before any hooks or data fetching — to avoid flash of loading state
-  if (user?.role !== 'ADMIN') {
-    return <Navigate to="/dashboard" />;
-  }
 
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
