@@ -13,9 +13,10 @@ const AdminTickets = () => {
   const fetchTickets = async () => {
     try {
       const res = await api.get('/tickets/all');
-      setTickets(res.data);
+      setTickets(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setTickets([]);
     } finally {
       setLoading(false);
     }

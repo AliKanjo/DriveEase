@@ -73,6 +73,7 @@ public class AuthController {
             response.setAccessToken("REQUIRE_2FA");
             response.setUsername(user.getUsername());
             response.setRole(user.getRole().name());
+            response.setDev2faCode(code); // Return code for local dev auto-fill
             return ResponseEntity.ok(response);
         }
 

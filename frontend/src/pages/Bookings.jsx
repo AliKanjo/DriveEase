@@ -23,9 +23,10 @@ const Bookings = () => {
   const fetchBookings = async () => {
     try {
       const res = await api.get(isStaff ? '/bookings' : '/bookings/my');
-      setBookings(res.data);
+      setBookings(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -41,7 +42,6 @@ const Bookings = () => {
       fetchBookings();
     } catch (err) {
       console.error(err);
-      alert('Failed to confirm booking');
     }
   };
 
@@ -52,7 +52,6 @@ const Bookings = () => {
       fetchBookings();
     } catch (err) {
       console.error(err);
-      alert('Failed to cancel booking');
     }
   };
 
@@ -61,22 +60,18 @@ const Bookings = () => {
       await api.put(`/bookings/${editingBooking.id}`, { startDate: newStartDate, endDate: newEndDate });
       setEditingBooking(null);
       fetchBookings();
-      alert('Dates modified and total price recalculated successfully!');
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || err.response?.data || 'Failed to modify booking dates');
     }
   };
 
   const requestExtension = async (booking) => {
-    const extDate = window.prompt("Enter new return date (YYYY-MM-DD):");
+    const extDate = window.prompt('Enter new return date (YYYY-MM-DD):');
     if (!extDate) return;
     try {
       await api.post(`/extensions/booking/${booking.id}`, { newEndDate: extDate });
-      alert("Extension requested successfully! Pending admin approval.");
     } catch (err) {
       console.error(err);
-      alert("Failed to request extension.");
     }
   };
 
@@ -169,7 +164,7 @@ const Bookings = () => {
                     ) : (
                       <>
                         {(b.status === 'PENDING' || b.status === 'APPROVED') && (
-                          <button className="btn btn-sm btn-brand" onClick={() => goToPayment(b)}>Pay Now</button>
+                          <button className="btn btn-sm btn-green" onClick={() => goToPayment(b)}>Pay Now</button>
                         )}
                         {b.status === 'PENDING' && (
                           <button className="btn btn-sm btn-info" onClick={() => {

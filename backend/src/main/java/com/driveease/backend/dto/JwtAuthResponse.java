@@ -14,4 +14,5 @@ public class JwtAuthResponse {
     private String tokenType = "Bearer";
     private String username;
     private String role;
+    private String dev2faCode; // For local dev auto-fill
 }

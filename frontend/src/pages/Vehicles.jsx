@@ -35,10 +35,12 @@ const Vehicles = () => {
         api.get('/vehicles'),
         api.get('/branches')
       ]);
-      setVehicles(vehRes.data);
-      setBranches(branchRes.data);
+      setVehicles(Array.isArray(vehRes.data) ? vehRes.data : []);
+      setBranches(Array.isArray(branchRes.data) ? branchRes.data : []);
     } catch (err) {
       console.error(err);
+      setVehicles([]);
+      setBranches([]);
     } finally {
       setLoading(false);
     }

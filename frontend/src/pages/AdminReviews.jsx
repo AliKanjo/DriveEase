@@ -8,9 +8,10 @@ const AdminReviews = () => {
   const fetchReviews = async () => {
     try {
       const res = await api.get('/reviews/all');
-      setReviews(res.data);
+      setReviews(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setReviews([]);
     } finally {
       setLoading(false);
     }

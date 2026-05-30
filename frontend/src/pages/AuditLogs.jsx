@@ -10,9 +10,10 @@ const AuditLogs = () => {
     const fetchLogs = async () => {
       try {
         const res = await api.get('/audit-logs');
-        setLogs(res.data);
+        setLogs(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
-        console.error("Failed to fetch audit logs", err);
+        console.error('Failed to fetch audit logs', err);
+        setLogs([]);
       } finally {
         setLoading(false);
       }

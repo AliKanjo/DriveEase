@@ -30,6 +30,9 @@ const Login = () => {
         const res = await login(username, password);
         if (res.accessToken === 'REQUIRE_2FA') {
           setRequire2fa(true);
+          if (res.dev2faCode) {
+            setTwoFactorCode(res.dev2faCode);
+          }
         } else {
           navigate('/dashboard');
         }
@@ -81,7 +84,7 @@ const Login = () => {
           {require2fa && (
             <>
               <div style={{ padding: '10px', background: '#ebf4ff', color: '#2b6cb0', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', textAlign: 'center' }}>
-                A 2FA code has been sent to your device. Please enter it below.
+                A 2FA code is required. For local development, it has been auto-filled for you below.
               </div>
               <label className="form-label">2FA Code</label>
               <input 

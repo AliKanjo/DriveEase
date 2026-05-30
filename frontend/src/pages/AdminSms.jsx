@@ -9,9 +9,10 @@ const AdminSms = () => {
     const fetchSms = async () => {
       try {
         const res = await api.get('/sms');
-        setSmsLogs(res.data);
+        setSmsLogs(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
-        console.error("Failed to fetch SMS logs");
+        console.error('Failed to fetch SMS logs');
+        setSmsLogs([]);
       } finally {
         setLoading(false);
       }

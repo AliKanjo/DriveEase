@@ -9,9 +9,10 @@ const Users = () => {
     const fetchUsers = async () => {
       try {
         const res = await api.get('/users');
-        setUsers(res.data);
+        setUsers(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
-        console.error("Failed to fetch users", err);
+        console.error('Failed to fetch users', err);
+        setUsers([]);
       } finally {
         setLoading(false);
       }

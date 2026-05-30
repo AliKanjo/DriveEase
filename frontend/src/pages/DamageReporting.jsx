@@ -18,9 +18,10 @@ const DamageReporting = () => {
   const fetchReports = async () => {
     try {
       const res = await api.get('/damage-reports');
-      setReports(res.data);
+      setReports(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setReports([]);
     } finally {
       setLoading(false);
     }
@@ -32,10 +33,12 @@ const DamageReporting = () => {
         api.get('/vehicles'),
         api.get('/bookings')
       ]);
-      setVehicles(vRes.data);
-      setBookings(bRes.data);
+      setVehicles(Array.isArray(vRes.data) ? vRes.data : []);
+      setBookings(Array.isArray(bRes.data) ? bRes.data : []);
     } catch (err) {
       console.error(err);
+      setVehicles([]);
+      setBookings([]);
     }
   };
 
