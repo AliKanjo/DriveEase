@@ -6,7 +6,7 @@ import { getVehicleImage } from '../utils/imageHelpers';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'EMPLOYEE';
 
   const [vehicles, setVehicles] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -15,19 +15,22 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const isStaff = user?.role === 'ADMIN' || user?.role === 'EMPLOYEE';
         const [vehRes, bookRes] = await Promise.all([
           api.get('/vehicles'),
-          isAdmin ? api.get('/bookings') : api.get('/bookings/my')
+          isStaff ? api.get('/bookings') : api.get('/bookings/my')
         ]);
-        setVehicles(vehRes.data);
-        setBookings(bookRes.data);
+        setVehicles(Array.isArray(vehRes.data) ? vehRes.data : []);
+        setBookings(Array.isArray(bookRes.data) ? bookRes.data : []);
       } catch (err) {
         console.error(err);
+        setVehicles([]);
+        setBookings([]);
       }
       setLoading(false);
     };
     if (user) fetchData();
-  }, [user, isAdmin]);
+  }, [user]);
 
   if (loading) return <div className="page active"><p>Loading...</p></div>;
 

@@ -29,7 +29,7 @@ public class BookingController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'EMPLOYEE')")
     public ResponseEntity<List<Booking>> getMyBookings(Authentication authentication) {
         return ResponseEntity.ok(bookingService.getUserBookings(authentication.getName()));
     }
